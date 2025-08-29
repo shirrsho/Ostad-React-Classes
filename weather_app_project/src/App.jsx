@@ -12,7 +12,7 @@ function App() {
   const [error, setError] = useState('')
 
   // OpenWeatherMap API key (free tier) - In production, use environment variables
-  const API_KEY = 'bd5e378503939ddaee76f12ad7a97608'
+  const API_KEY = '575530f8485c621232285553dc6d72e0'
   const API_URL = 'https://api.openweathermap.org/data/2.5/weather'
 
   // Fetch weather data from API

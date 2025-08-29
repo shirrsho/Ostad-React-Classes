@@ -147,17 +147,55 @@ This project demonstrates:
 
 ## 🔧 API Configuration
 
-The app uses OpenWeatherMap's free API tier. The API key is included for demonstration purposes. For production use:
+The app uses OpenWeatherMap's Current Weather Data API. **You need to get your own free API key** to use this app.
 
-1. Get your free API key from [OpenWeatherMap](https://openweathermap.org/api)
-2. Replace the `API_KEY` constant in `App.jsx`
-3. Consider using environment variables for security
+### **How to Get Your Free API Key:**
 
-## 📱 Responsive Breakpoints
+1. **Sign up** at [OpenWeatherMap](https://openweathermap.org/api)
+2. **Verify your email** (required for API access)
+3. **Go to your dashboard** and copy your API key
+4. **Replace** `YOUR_API_KEY_HERE` in `src/App.jsx` with your actual key
 
-- **Desktop**: > 768px
-- **Tablet**: 480px - 768px
-- **Mobile**: < 480px
+### **API Key Setup:**
+```javascript
+const API_KEY = 'YOUR_API_KEY_HERE' // Replace with your actual API key
+```
+
+**Current API Configuration:**
+- **Version**: OpenWeatherMap API v2.5
+- **Endpoint**: `https://api.openweathermap.org/data/2.5/weather`
+- **Units**: Metric (°C, m/s, hPa)
+- **Free Tier**: 1,000 calls/day included
+
+## 🧪 Testing Without API Key
+
+If you want to test the app's UI without getting an API key, you can:
+
+1. **Use Mock Data**: Temporarily replace the API call with mock weather data
+2. **Test Error States**: The app has built-in error handling you can test
+3. **Check Loading States**: The loading animations work without API calls
+
+### **Quick Mock Data Setup:**
+```javascript
+// In App.jsx, temporarily replace fetchWeather function:
+const fetchWeather = async (cityName) => {
+  setLoading(true)
+  setError('')
+  // Simulate API delay
+  setTimeout(() => {
+    const mockData = {
+      name: cityName,
+      sys: { country: 'US' },
+      weather: [{ description: 'clear sky', icon: '01d' }],
+      main: { temp: 22, feels_like: 25, humidity: 60, pressure: 1013 },
+      wind: { speed: 3.5 },
+      visibility: 10000
+    }
+    setWeather(mockData)
+    setLoading(false)
+  }, 1000)
+}
+```
 
 ## 🎨 Tailwind CSS Features Used
 
