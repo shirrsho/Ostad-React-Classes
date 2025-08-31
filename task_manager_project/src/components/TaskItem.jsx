@@ -24,6 +24,7 @@ function TaskItem({ task, onToggle, onDelete, onUpdate }) {
     }
   }
 
+  
   return (
     <div className="flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
       <input
