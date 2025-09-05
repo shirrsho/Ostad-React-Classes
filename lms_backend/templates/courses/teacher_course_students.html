@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Enrolled Students - {{ course.title }} | Pathshala{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4 text-primary">Enrolled Students for "{{ course.title }}"</h2>
+
+    <form method="GET" class="row g-3 mb-4 align-items-end">
+        <div class="col-md-4">
+            <label for="search" class="form-label fw-semibold">Search Students</label>
+            <input type="text" name="search" id="search" class="form-control" value="{{ search|default:'' }}" placeholder="Name, email, or username">
+        </div>
+        <div class="col-md-3">
+            <label for="progress" class="form-label fw-semibold">Progress Filter</label>
+            <select name="progress" id="progress" class="form-select">
+                <option value="">-- All Progress --</option>
+                <option value="not_started" {% if progress_filter == 'not_started' %}selected{% endif %}>Not Started</option>
+                <option value="in_progress" {% if progress_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="completed" {% if progress_filter == 'completed' %}selected{% endif %}>Completed</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-filter me-1"></i> Filter
+            </button>
+        </div>
+    </form>
+
+    {% if enrollments %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Student</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Enrolled On</th>
+                        <th scope="col">Progress (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in enrollments %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ enrollment.student_id.get_full_name }}</td>
+                            <td>{{ enrollment.student_id.email }}</td>
+                            <td>{{ enrollment.student_id.username }}</td>
+                            <td>{{ enrollment.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: {{ enrollment.progress }}%;"
+                                         aria-valuenow="{{ enrollment.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ enrollment.progress }}%</small>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if enrollments.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ enrollments.previous_page_number }}&search={{ search }}&progress={{ progress_filter }}">
+                            &laquo;
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+
+                {% for num in enrollments.paginator.page_range %}
+                    <li class="page-item {% if enrollments.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}&search={{ search }}&progress={{ progress_filter }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+
+                {% if enrollments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ enrollments.next_page_number }}&search={{ search }}&progress={{ progress_filter }}">
+                            &raquo;
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <div class="alert alert-info">No students enrolled or no matches found.</div>
+    {% endif %}
+</div>
+{% endblock %}

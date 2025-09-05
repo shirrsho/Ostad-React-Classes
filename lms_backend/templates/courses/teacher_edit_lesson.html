@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Edit Lesson - {{ course.title }} | Pathshala{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4 text-primary">Edit Lesson: "{{ lesson.title }}"</h2>
+
+    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="title" class="form-label fw-semibold">Lesson Title</label>
+            <input type="text" name="title" id="title" class="form-control" value="{{ lesson.title }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label fw-semibold">Description</label>
+            <textarea name="description" id="description" class="form-control" rows="4" required>{{ lesson.description }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="lesson_type" class="form-label fw-semibold">Lesson Type</label>
+            <select name="lesson_type" id="lesson_type" class="form-select" required>
+                <option value="youtube" {% if lesson.lesson_type == 'youtube' %}selected{% endif %}>YouTube</option>
+                <option value="upload" {% if lesson.lesson_type == 'upload' %}selected{% endif %}>Upload Video</option>
+                <option value="text" {% if lesson.lesson_type == 'text' %}selected{% endif %}>Text Content</option>
+            </select>
+        </div>
+
+        <div class="mb-3" id="youtube_url_div" {% if lesson.lesson_type != 'youtube' %}style="display: none;"{% endif %}>
+            <label for="youtube_url" class="form-label fw-semibold">YouTube URL</label>
+            <input type="url" name="youtube_url" id="youtube_url" class="form-control" value="{{ lesson.youtube_url }}" placeholder="https://www.youtube.com/watch?v=XXXXXX">
+        </div>
+
+        <div class="mb-3" id="video_upload_div" {% if lesson.lesson_type != 'upload' %}style="display: none;"{% endif %}>
+            <label for="video" class="form-label fw-semibold">Upload Video</label>
+            <input type="file" name="video" id="video" class="form-control">
+            {% if lesson.video %}
+                <small class="text-muted">Current Video: {{ lesson.video.name }}</small>
+            {% endif %}
+        </div>
+
+        <div class="mb-3" id="text_content_div" {% if lesson.lesson_type != 'text' %}style="display: none;"{% endif %}>
+            <label for="text_content" class="form-label fw-semibold">Text Content</label>
+            <textarea name="text_content" id="text_content" class="form-control" rows="6">{{ lesson.text_content }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="duration_minutes" class="form-label fw-semibold">Duration (Minutes)</label>
+            <input type="number" name="duration_minutes" id="duration_minutes" class="form-control" value="{{ lesson.duration_minutes }}" min="1" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="order" class="form-label fw-semibold">Order</label>
+            <input type="number" name="order" id="order" class="form-control" value="{{ lesson.order }}" min="1" required>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'teacher_course_lessons' course.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Lessons
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+    // Show the correct input fields based on lesson type
+    document.getElementById('lesson_type').addEventListener('change', function() {
+        const lessonType = this.value;
+        document.getElementById('youtube_url_div').style.display = lessonType === 'youtube' ? 'block' : 'none';
+        document.getElementById('video_upload_div').style.display = lessonType === 'upload' ? 'block' : 'none';
+        document.getElementById('text_content_div').style.display = lessonType === 'text' ? 'block' : 'none';
+    });
+</script>
+{% endblock %}
+{% endblock %}

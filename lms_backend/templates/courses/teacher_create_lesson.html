@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Lesson - {{ course.title }} - Pathshala{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Add New Lesson</h3>
+                    <p class="text-muted mb-0">Course: {{ course.title }}</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Lesson Information</h4>
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Lesson Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Describe what students will learn in this lesson..."></textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="duration_minutes" class="form-label">Duration (minutes)</label>
+                                        <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" min="0" placeholder="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="order" class="form-label">Lesson Order</label>
+                                        <input type="number" class="form-control" id="order" name="order" min="0" value="{{ lessons_count|add:1 }}">
+                                        <div class="form-text">Lower numbers appear first</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lesson Type -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Lesson Content</h4>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Lesson Type <span class="text-danger">*</span></label>
+                                <div class="lesson-type-selector">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="type-card" data-type="youtube">
+                                                <input type="radio" name="lesson_type" value="youtube" id="type-youtube" checked>
+                                                <label for="type-youtube" class="type-label">
+                                                    <i class="fab fa-youtube fa-2x text-danger mb-2"></i>
+                                                    <h6>YouTube Video</h6>
+                                                    <p class="small text-muted">Share a YouTube video link</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="type-card" data-type="upload">
+                                                <input type="radio" name="lesson_type" value="upload" id="type-upload">
+                                                <label for="type-upload" class="type-label">
+                                                    <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2"></i>
+                                                    <h6>Upload Video</h6>
+                                                    <p class="small text-muted">Upload your own video file</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="type-card" data-type="text">
+                                                <input type="radio" name="lesson_type" value="text" id="type-text">
+                                                <label for="type-text" class="type-label">
+                                                    <i class="fas fa-file-alt fa-2x text-info mb-2"></i>
+                                                    <h6>Text Content</h6>
+                                                    <p class="small text-muted">Written lesson content</p>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- YouTube URL Input -->
+                            <div class="content-input" id="youtube-content">
+                                <div class="mb-3">
+                                    <label for="youtube_url" class="form-label">YouTube Video URL <span class="text-danger">*</span></label>
+                                    <input type="url" class="form-control" id="youtube_url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=...">
+                                    <div class="form-text">
+                                        Paste the YouTube video URL. Supported formats: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/...
+                                    </div>
+                                </div>
+                                
+                                <!-- Video Preview -->
+                                <div id="video-preview" class="mt-3" style="display: none;">
+                                    <label class="form-label">Video Preview</label>
+                                    <div id="video-preview-container"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Upload Video Input -->
+                            <div class="content-input" id="upload-content" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="video" class="form-label">Upload Video File <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control" id="video" name="video" accept="video/*">
+                                    <div class="form-text">
+                                        Supported formats: MP4, WebM, AVI (max 100MB)
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Text Content Input -->
+                            <div class="content-input" id="text-content" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="text_content" class="form-label">Lesson Content <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="text_content" name="text_content" rows="10" placeholder="Write your lesson content here..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'teacher_course_lessons' course.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Lessons
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Create Lesson
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.lesson-type-selector {
+    margin-bottom: 1rem;
+}
+
+.type-card {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    height: 100%;
+}
+
+.type-card:hover {
+    border-color: var(--primary);
+    background-color: rgba(94, 114, 228, 0.05);
+}
+
+.type-card.active {
+    border-color: var(--primary);
+    background-color: rgba(94, 114, 228, 0.1);
+}
+
+.type-card input[type="radio"] {
+    display: none;
+}
+
+.type-label {
+    cursor: pointer;
+    display: block;
+    margin: 0;
+}
+
+.type-label h6 {
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+}
+
+.content-input {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+#video-preview-container {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#video-preview-container iframe {
+    width: 100%;
+    height: 300px;
+    border: none;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+h4 {
+    color: var(--primary);
+    border-bottom: 2px solid #f8f9fa;
+    padding-bottom: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeCards = document.querySelectorAll('.type-card');
+    const contentInputs = document.querySelectorAll('.content-input');
+    const youtubeUrlInput = document.getElementById('youtube_url');
+    const videoPreview = document.getElementById('video-preview');
+    const videoPreviewContainer = document.getElementById('video-preview-container');
+    
+    // Handle lesson type selection
+    typeCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const type = this.getAttribute('data-type');
+            const radio = this.querySelector('input[type="radio"]');
+            
+            // Update radio selection
+            radio.checked = true;
+            
+            // Update visual state
+            typeCards.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show/hide content inputs
+            contentInputs.forEach(input => {
+                input.style.display = 'none';
+            });
+            
+            document.getElementById(type + '-content').style.display = 'block';
+            
+            // Update required fields
+            updateRequiredFields(type);
+        });
+    });
+    
+    // YouTube URL preview
+    youtubeUrlInput.addEventListener('input', function() {
+        const url = this.value;
+        if (url) {
+            const embedUrl = getYouTubeEmbedUrl(url);
+            if (embedUrl) {
+                videoPreviewContainer.innerHTML = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
+                videoPreview.style.display = 'block';
+            } else {
+                videoPreview.style.display = 'none';
+            }
+        } else {
+            videoPreview.style.display = 'none';
+        }
+    });
+    
+    // Initialize with YouTube selected
+    document.querySelector('[data-type="youtube"]').classList.add('active');
+    updateRequiredFields('youtube');
+    
+    function updateRequiredFields(type) {
+        // Remove all required attributes
+        document.getElementById('youtube_url').removeAttribute('required');
+        document.getElementById('video').removeAttribute('required');
+        document.getElementById('text_content').removeAttribute('required');
+        
+        // Add required attribute based on type
+        if (type === 'youtube') {
+            document.getElementById('youtube_url').setAttribute('required', 'required');
+        } else if (type === 'upload') {
+            document.getElementById('video').setAttribute('required', 'required');
+        } else if (type === 'text') {
+            document.getElementById('text_content').setAttribute('required', 'required');
+        }
+    }
+    
+    function getYouTubeEmbedUrl(url) {
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+            /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+        ];
+        
+        for (let pattern of patterns) {
+            const match = url.match(pattern);
+            if (match) {
+                return `https://www.youtube.com/embed/${match[1]}`;
+            }
+        }
+        return null;
+    }
+});
+</script>
+{% endblock %}

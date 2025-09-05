@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Course - {{ course.title }} - Pathshala{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">Edit Course</h1>
+                    <p class="text-muted">Update your course information and settings</p>
+                </div>
+                <a href="{% url 'teacher_courses' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Courses
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>Course Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Course Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ course.title }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="5" required>{{ course.description }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="category_id" class="form-label">Category *</label>
+                                    <select class="form-select" id="category_id" name="category_id" required>
+                                        <option value="">Select a category</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category.id }}" {% if category.id == course.category_id.id %}selected{% endif %}>
+                                                {{ category.title }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Price ($)</label>
+                                    <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" value="{{ course.price }}">
+                                    <div class="form-text">Set to 0 for free courses</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration (hours)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" step="0.5" min="0" value="{{ course.duration }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="banner" class="form-label">Course Banner</label>
+                            <input type="file" class="form-control" id="banner" name="banner" accept="image/*">
+                            <div class="form-text">Upload a new banner image to replace the current one</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Course
+                            </button>
+                            <a href="{% url 'teacher_courses' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-image me-2"></i>Current Banner
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if course.banner %}
+                        <img src="{{ course.banner.url }}" alt="{{ course.title }}" class="img-fluid rounded">
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-image fa-3x mb-3"></i>
+                            <p>No banner uploaded</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Course Stats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <div class="stat-value">{{ course.enrollment_set.count }}</div>
+                                <div class="stat-label">Students</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <div class="stat-value">{{ course.lesson_set.count }}</div>
+                                <div class="stat-label">Lessons</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{% url 'teacher_course_lessons' course.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-play me-2"></i>Manage Lessons
+                        </a>
+                        <a href="{% url 'teacher_course_students' course.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-users me-2"></i>View Students
+                        </a>
+                        <a href="{% url 'teacher_course_materials' course.id %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-file-alt me-2"></i>Course Materials
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--dark);
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

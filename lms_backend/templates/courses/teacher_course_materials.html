@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}Course Materials - {{ course.title }} | Pathshala{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h1 class="h3 mb-1">{{ course.title }}</h1>
+                            <p class="text-muted mb-3">{{ course.description|truncatewords:20 }}</p>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-primary">{{ course.category_id.title }}</span>
+                                <span class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ course.duration }} hours
+                                </span>
+                                <span class="text-muted">
+                                    <i class="fas fa-users me-1"></i>{{ course.enrollment_set.count }} students
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'teacher_create_material' course.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add New Material
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materials Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">{{ materials.count }}</div>
+                    <div class="stat-label">Total Materials</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">
+                        {% with materials|dictsort:"file_type" as sorted_materials %}
+                            {% regroup sorted_materials by file_type as materials_by_type %}
+                            {{ materials_by_type|length }}
+                        {% endwith %}
+                    </div>
+                    <div class="stat-label">File Types</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">
+                        {% with materials|length as total %}
+                            {% with materials|dictsort:"is_active" as sorted %}
+                                {% for material in sorted %}
+                                    {% if material.is_active and forloop.last %}
+                                        {{ forloop.counter }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                        {% endwith %}
+                    </div>
+                    <div class="stat-label">Active Materials</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">
+                        {% now "j" as today %}
+                        {% with materials|dictsort:"created_at" as sorted %}
+                            {% for material in sorted %}
+                                {% if material.created_at.day == today|add:0 %}
+                                    {% if forloop.last %}{{ forloop.counter }}{% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="stat-label">Added Today</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materials List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Course Materials</h5>
+                </div>
+                <div class="card-body">
+                    {% if materials %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Type</th>
+                                        <th>File Size</th>
+                                        <th>Downloads</th>
+                                        <th>Added</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for material in materials %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    {% if material.file_type == 'pdf' %}
+                                                        <i class="fas fa-file-pdf text-danger" style="font-size: 1.5rem;"></i>
+                                                    {% elif material.file_type == 'doc' or material.file_type == 'docx' %}
+                                                        <i class="fas fa-file-word text-primary" style="font-size: 1.5rem;"></i>
+                                                    {% elif material.file_type == 'ppt' or material.file_type == 'pptx' %}
+                                                        <i class="fas fa-file-powerpoint text-warning" style="font-size: 1.5rem;"></i>
+                                                    {% elif material.file_type == 'xls' or material.file_type == 'xlsx' %}
+                                                        <i class="fas fa-file-excel text-success" style="font-size: 1.5rem;"></i>
+                                                    {% elif material.file_type == 'zip' or material.file_type == 'rar' %}
+                                                        <i class="fas fa-file-archive text-secondary" style="font-size: 1.5rem;"></i>
+                                                    {% elif material.file_type == 'mp4' or material.file_type == 'avi' or material.file_type == 'mkv' %}
+                                                        <i class="fas fa-file-video text-info" style="font-size: 1.5rem;"></i>
+                                                    {% elif material.file_type == 'jpg' or material.file_type == 'png' or material.file_type == 'gif' %}
+                                                        <i class="fas fa-file-image text-success" style="font-size: 1.5rem;"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-file text-muted" style="font-size: 1.5rem;"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1">{{ material.title }}</h6>
+                                                    <small class="text-muted">{{ material.description|truncatewords:15 }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">{{ material.file_type|upper }}</span>
+                                        </td>
+                                        <td>
+                                            {% if material.file %}
+                                                <small class="text-muted">
+                                                    {% if material.file.size %}
+                                                        {{ material.file.size|filesizeformat }}
+                                                    {% else %}
+                                                        Unknown
+                                                    {% endif %}
+                                                </small>
+                                            {% else %}
+                                                <small class="text-muted">No file</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">0</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ material.created_at|date:"M d, Y" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if material.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                {% if material.file %}
+                                                    <a href="{{ material.file.url }}" 
+                                                       class="btn btn-sm btn-outline-success" 
+                                                       download>
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <button class="btn btn-sm btn-outline-primary" 
+                                                        onclick="editMaterial({{ material.id }}, '{{ material.title }}', '{{ material.description }}', '{{ material.file_type }}')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteMaterial({{ material.id }}, '{{ material.title }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3">No materials yet</h4>
+                            <p class="text-muted">Add study materials, assignments, and resources for your students.</p>
+                            <a href="{% url 'teacher_create_material' course.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add First Material
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'teacher_course_lessons' course.id %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-play-circle me-2"></i>Manage Lessons
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'teacher_course_students' course.id %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-users me-2"></i>View Students
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'teacher_edit_course' course.id %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-edit me-2"></i>Edit Course
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-info w-100" target="_blank">
+                                <i class="fas fa-eye me-2"></i>Preview Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Material Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="editTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFileType" class="form-label">File Type</label>
+                        <select class="form-select" id="editFileType" name="file_type" required>
+                            <option value="pdf">PDF</option>
+                            <option value="doc">Word Document</option>
+                            <option value="docx">Word Document (DOCX)</option>
+                            <option value="ppt">PowerPoint</option>
+                            <option value="pptx">PowerPoint (PPTX)</option>
+                            <option value="xls">Excel</option>
+                            <option value="xlsx">Excel (XLSX)</option>
+                            <option value="zip">ZIP Archive</option>
+                            <option value="rar">RAR Archive</option>
+                            <option value="mp4">MP4 Video</option>
+                            <option value="avi">AVI Video</option>
+                            <option value="mkv">MKV Video</option>
+                            <option value="jpg">JPEG Image</option>
+                            <option value="png">PNG Image</option>
+                            <option value="gif">GIF Image</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFile" class="form-label">Replace File (Optional)</label>
+                        <input type="file" class="form-control" id="editFile" name="file">
+                        <small class="form-text text-muted">Leave empty to keep the current file</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the material "<span id="materialTitle"></span>"? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger">Delete Material</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editMaterial(materialId, title, description, fileType) {
+    document.getElementById('editTitle').value = title;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editFileType').value = fileType;
+    document.getElementById('editForm').action = `/teacher/courses/{{ course.id }}/materials/${materialId}/edit/`;
+    var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    editModal.show();
+}
+
+function deleteMaterial(materialId, materialTitle) {
+    document.getElementById('materialTitle').textContent = materialTitle;
+    document.getElementById('deleteForm').action = `/teacher/courses/{{ course.id }}/materials/${materialId}/delete/`;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
+{% endblock %}

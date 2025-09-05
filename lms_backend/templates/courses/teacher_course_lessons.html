@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Course Lessons - {{ course.title }} | Pathshala{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h1 class="h3 mb-1">{{ course.title }}</h1>
+                            <p class="text-muted mb-3">{{ course.description|truncatewords:20 }}</p>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-primary">{{ course.category_id.title }}</span>
+                                <span class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ course.duration }} hours
+                                </span>
+                                <span class="text-muted">
+                                    <i class="fas fa-users me-1"></i>{{ course.enrollment_set.count }} students
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'teacher_create_lesson' course.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Add New Lesson
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lessons Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">{{ lessons.count }}</div>
+                    <div class="stat-label">Total Lessons</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">{{ lesson_stats|length }}</div>
+                    <div class="stat-label">Active Lessons</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">
+                        {% if lesson_stats %}
+                            {{ lesson_stats.0.total_enrolled }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Enrolled Students</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="stat-value">
+                        {% if lesson_stats %}
+                            {% for stat in lesson_stats %}
+                                {% if forloop.first %}{{ stat.completion_rate|floatformat:0 }}%{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Avg. Completion</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lessons List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Course Lessons</h5>
+                </div>
+                <div class="card-body">
+                    {% if lesson_stats %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Lesson</th>
+                                        <th>Type</th>
+                                        <th>Duration</th>
+                                        <th>Completion Rate</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stat in lesson_stats %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ stat.lesson.order|default:forloop.counter }}</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <h6 class="mb-1">{{ stat.lesson.title }}</h6>
+                                                <small class="text-muted">{{ stat.lesson.description|truncatewords:15 }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if stat.lesson.lesson_type == 'youtube' %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fab fa-youtube me-1"></i>YouTube
+                                                </span>
+                                            {% elif stat.lesson.lesson_type == 'upload' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-video me-1"></i>Video
+                                                </span>
+                                            {% elif stat.lesson.lesson_type == 'text' %}
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-file-text me-1"></i>Text
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-clock me-1"></i>{{ stat.lesson.duration_minutes }} min
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 100px; height: 6px;">
+                                                    <div class="progress-bar" role="progressbar" 
+                                                         style="width: {{ stat.completion_rate }}%"
+                                                         aria-valuenow="{{ stat.completion_rate }}" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">{{ stat.completion_rate|floatformat:1 }}%</small>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{ stat.completed_count }}/{{ stat.total_enrolled }} completed
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% if stat.lesson.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'teacher_edit_lesson' course.id stat.lesson.id %}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'lesson_detail' course.id stat.lesson.id %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   target="_blank">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteLesson({{ stat.lesson.id }}, '{{ stat.lesson.title }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-play-circle text-muted" style="font-size: 4rem;"></i>
+                            <h4 class="mt-3">No lessons yet</h4>
+                            <p class="text-muted">Create your first lesson to get started with your course.</p>
+                            <a href="{% url 'teacher_create_lesson' course.id %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create First Lesson
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'teacher_course_students' course.id %}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-users me-2"></i>View Students
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'teacher_course_materials' course.id %}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-folder me-2"></i>Manage Materials
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'teacher_edit_course' course.id %}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-edit me-2"></i>Edit Course
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-info w-100" target="_blank">
+                                <i class="fas fa-eye me-2"></i>Preview Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Lesson</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the lesson "<span id="lessonTitle"></span>"? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger">Delete Lesson</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteLesson(lessonId, lessonTitle) {
+    document.getElementById('lessonTitle').textContent = lessonTitle;
+    document.getElementById('deleteForm').action = `/teacher/courses/{{ course.id }}/lessons/${lessonId}/delete/`;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
+{% endblock %}

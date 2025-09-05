@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Course - Pathshala{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Create New Course</h3>
+                    <p class="text-muted mb-0">Share your knowledge with students around the world</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Basic Information</h4>
+                            
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Course Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Full Stack Web Development with Django" required>
+                                <div class="form-text">Make it clear and compelling to attract students</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category_id" name="category_id" required>
+                                    <option value="">Select a category</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Course Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe what students will learn in this course..." required></textarea>
+                                <div class="form-text">Minimum 200 characters. Be specific about what students will achieve.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Course Details -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Course Details</h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="price" class="form-label">Price ($)</label>
+                                        <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" placeholder="0.00">
+                                        <div class="form-text">Set to 0 for free courses</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="duration" class="form-label">Duration (hours)</label>
+                                        <input type="number" class="form-control" id="duration" name="duration" min="0" step="0.5" placeholder="0">
+                                        <div class="form-text">Estimated total course duration</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Course Banner -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Course Banner</h4>
+                            
+                            <div class="mb-3">
+                                <label for="banner" class="form-label">Course Thumbnail</label>
+                                <input type="file" class="form-control" id="banner" name="banner" accept="image/*">
+                                <div class="form-text">
+                                    Upload a banner image for your course (recommended size: 1280x720px, max 2MB)
+                                </div>
+                            </div>
+                            
+                            <!-- Preview Area -->
+                            <div id="banner-preview" class="mt-3" style="display: none;">
+                                <img id="banner-preview-img" src="" alt="Banner Preview" class="img-fluid rounded" style="max-height: 200px;">
+                            </div>
+                        </div>
+                        
+                        <!-- Course Requirements -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Additional Information</h4>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Course Requirements</label>
+                                <div id="requirements-container">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="requirements[]" placeholder="e.g. Basic understanding of HTML and CSS">
+                                        <button type="button" class="btn btn-outline-danger remove-requirement" style="display: none;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="add-requirement">
+                                    <i class="fas fa-plus me-1"></i>Add Requirement
+                                </button>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">What Students Will Learn</label>
+                                <div id="learning-container">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="learning[]" placeholder="e.g. Build responsive websites from scratch">
+                                        <button type="button" class="btn btn-outline-danger remove-learning" style="display: none;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="add-learning">
+                                    <i class="fas fa-plus me-1"></i>Add Learning Outcome
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'teacher_courses' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <div>
+                                <button type="submit" name="save_draft" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-save me-1"></i>Save as Draft
+                                </button>
+                                <button type="submit" name="publish" class="btn btn-primary">
+                                    <i class="fas fa-upload me-1"></i>Create & Publish
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-label {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.input-group .btn {
+    border-left: 0;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+h4 {
+    color: var(--primary);
+    border-bottom: 2px solid #f8f9fa;
+    padding-bottom: 0.5rem;
+}
+
+.remove-requirement,
+.remove-learning {
+    transition: all 0.3s ease;
+}
+
+.remove-requirement:hover,
+.remove-learning:hover {
+    background-color: var(--danger);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Banner preview
+    const bannerInput = document.getElementById('banner');
+    const bannerPreview = document.getElementById('banner-preview');
+    const bannerPreviewImg = document.getElementById('banner-preview-img');
+    
+    bannerInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                bannerPreviewImg.src = e.target.result;
+                bannerPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Add/Remove Requirements
+    const addRequirementBtn = document.getElementById('add-requirement');
+    const requirementsContainer = document.getElementById('requirements-container');
+    
+    addRequirementBtn.addEventListener('click', function() {
+        const newRequirement = document.createElement('div');
+        newRequirement.className = 'input-group mb-2';
+        newRequirement.innerHTML = `
+            <input type="text" class="form-control" name="requirements[]" placeholder="Enter course requirement">
+            <button type="button" class="btn btn-outline-danger remove-requirement">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        requirementsContainer.appendChild(newRequirement);
+        
+        // Show remove buttons
+        document.querySelectorAll('.remove-requirement').forEach(btn => {
+            btn.style.display = 'block';
+        });
+    });
+    
+    // Remove requirement
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-requirement')) {
+            e.target.closest('.input-group').remove();
+            
+            // Hide remove buttons if only one requirement left
+            const requirementInputs = document.querySelectorAll('input[name="requirements[]"]');
+            if (requirementInputs.length <= 1) {
+                document.querySelectorAll('.remove-requirement').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+            }
+        }
+    });
+    
+    // Add/Remove Learning Outcomes
+    const addLearningBtn = document.getElementById('add-learning');
+    const learningContainer = document.getElementById('learning-container');
+    
+    addLearningBtn.addEventListener('click', function() {
+        const newLearning = document.createElement('div');
+        newLearning.className = 'input-group mb-2';
+        newLearning.innerHTML = `
+            <input type="text" class="form-control" name="learning[]" placeholder="Enter learning outcome">
+            <button type="button" class="btn btn-outline-danger remove-learning">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        learningContainer.appendChild(newLearning);
+        
+        // Show remove buttons
+        document.querySelectorAll('.remove-learning').forEach(btn => {
+            btn.style.display = 'block';
+        });
+    });
+    
+    // Remove learning outcome
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-learning')) {
+            e.target.closest('.input-group').remove();
+            
+            // Hide remove buttons if only one learning outcome left
+            const learningInputs = document.querySelectorAll('input[name="learning[]"]');
+            if (learningInputs.length <= 1) {
+                document.querySelectorAll('.remove-learning').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

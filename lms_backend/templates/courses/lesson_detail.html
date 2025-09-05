@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+{% load course_extras %}
+
+{% block title %}{{ lesson.title }} - {{ course.title }} - Pathshala{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Lesson Content -->
+        <div class="col-lg-8">
+            <div class="lesson-content">
+                <!-- Lesson Video/Content -->
+                <div class="lesson-video-container mb-4">
+                    {% if lesson.lesson_type == 'youtube' and lesson.get_youtube_embed_url %}
+                    <div class="video-wrapper">
+                        <iframe id="lesson-video" width="100%" height="400"
+                            src="{{ lesson.get_youtube_embed_url }}?enablejsapi=1&rel=0&modestbranding=1"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    {% elif lesson.lesson_type == 'upload' and lesson.video %}
+                    <div class="video-wrapper">
+                        <video id="lesson-video" width="100%" height="400" controls preload="metadata">
+                            <source src="{{ lesson.video.url }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    {% elif lesson.lesson_type == 'text' %}
+                    <div class="text-content-wrapper">
+                        <div class="text-content">
+                            {{ lesson.text_content|linebreaks }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="no-content-wrapper">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Content for this lesson is not available yet.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Lesson Info -->
+                <div class="lesson-info mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h1>{{ lesson.title }}</h1>
+                        <div class="lesson-actions">
+                            {% if not lesson_progress.is_completed %}
+                            <form method="POST" action="{% url 'mark_lesson_complete' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="lesson_id" value="{{ lesson.id }}">
+                                <input type="hidden" name="watch_time" value="300">
+                                <!-- Replace 300 with accurate static/default time if needed -->
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check me-2"></i>Mark as Complete
+                                </button>
+                            </form>
+
+                            {% else %}
+                            <button class="btn btn-outline-success" disabled>
+                                <i class="fas fa-check me-2"></i>Completed
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="lesson-meta mb-3">
+                        <span class="me-3">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ lesson.duration_minutes }} minutes
+                        </span>
+                        <span class="me-3">
+                            <i class="fas fa-user me-1"></i>
+                            {{ course.instructor_id.get_full_name|default:course.instructor_id.username }}
+                        </span>
+                        {% if lesson_progress.is_completed %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check me-1"></i>Completed
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="lesson-description">
+                        <h3>About this lesson</h3>
+                        <p>{{ lesson.description|linebreaks }}</p>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="lesson-navigation mb-4">
+                    <div class="d-flex justify-content-between">
+                        {% if previous_lesson %}
+                        <a href="{% url 'lesson_detail' course.id previous_lesson.id %}"
+                            class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Previous: {{ previous_lesson.title|truncate_words:4 }}
+                        </a>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+
+                        {% if next_lesson %}
+                        <a href="{% url 'lesson_detail' course.id next_lesson.id %}" class="btn btn-primary">
+                            Next: {{ next_lesson.title|truncate_words:4 }}<i class="fas fa-arrow-right ms-2"></i>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-book me-2"></i>Back to Course
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Questions Section -->
+                <div class="lesson-questions">
+                    <h3>Questions & Discussion</h3>
+
+                    <!-- Ask Question Form -->
+                    <div class="ask-question-form mb-4">
+                        <form method="POST" action="{% url 'create_question' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="lesson_id" value="{{ lesson.id }}">
+                            <div class="mb-3">
+                                <textarea class="form-control" name="description" rows="3"
+                                    placeholder="Ask a question about this lesson..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-question me-2"></i>Ask Question
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Questions List -->
+                    <div class="questions-list">
+                        {% for question in questions %}
+                        <div class="question-item mb-3">
+                            <div class="question-header d-flex align-items-center mb-2">
+                                {% user_avatar question.user_id 32 %}
+                                <div class="ms-2">
+                                    <strong>{{ question.user_id.get_full_name|default:question.user_id.username }}</strong>
+                                    <small class="text-muted ms-2">{{ question.created_at|timesince }} ago</small>
+                                </div>
+                            </div>
+                            <div class="question-content">
+                                <p>{{ question.description|linebreaks }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No questions yet. Be the first to ask!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="lesson-sidebar">
+                <!-- Course Progress -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Course Progress</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-info mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Overall Progress</span>
+                                <span>{{ enrollment.progress }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ enrollment.progress }}%;"
+                                    aria-valuenow="{{ enrollment.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                        <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-book me-2"></i>Back to Course
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Lesson List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Course Content</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="lesson-list">
+                            {% for lesson_item in all_lessons %}
+                            <div class="lesson-item {% if lesson_item.id == lesson.id %}active{% endif %}">
+                                <a href="{% url 'lesson_detail' course.id lesson_item.id %}"
+                                    class="d-flex align-items-center p-3 text-decoration-none">
+                                    <div class="lesson-icon me-3">
+                                        {% if lesson_item.lesson_type == 'youtube' %}
+                                        <i class="fab fa-youtube text-danger"></i>
+                                        {% elif lesson_item.lesson_type == 'upload' %}
+                                        <i class="fas fa-play-circle text-primary"></i>
+                                        {% else %}
+                                        <i class="fas fa-file-alt text-info"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="lesson-details flex-grow-1">
+                                        <div class="lesson-title">{{ lesson_item.title }}</div>
+                                        <div class="lesson-duration text-muted small">{{ lesson_item.duration_minutes }}
+                                            min</div>
+                                    </div>
+                                    <div class="lesson-status">
+                                        {% if lesson_item.id in completed_lessons %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        {% else %}
+                                        <i class="fas fa-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .lesson-content {
+        padding: 2rem;
+    }
+
+    .video-wrapper {
+        position: relative;
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .text-content-wrapper {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 2rem;
+        min-height: 400px;
+    }
+
+    .text-content {
+        line-height: 1.6;
+        font-size: 1.1rem;
+    }
+
+    .lesson-info h1 {
+        color: var(--dark);
+        margin-bottom: 0;
+    }
+
+    .lesson-meta {
+        color: #6c757d;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 1rem;
+    }
+
+    .lesson-description {
+        padding-top: 1rem;
+    }
+
+    .lesson-navigation {
+        border-top: 1px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        padding: 1rem 0;
+    }
+
+    .lesson-questions {
+        padding-top: 1rem;
+    }
+
+    .question-item {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        background: #f8f9fa;
+    }
+
+    .lesson-sidebar {
+        padding: 2rem 1rem;
+        height: 100vh;
+        overflow-y: auto;
+        position: sticky;
+        top: 0;
+    }
+
+    .lesson-list .lesson-item {
+        border-bottom: 1px solid #dee2e6;
+        transition: background-color 0.3s;
+    }
+
+    .lesson-list .lesson-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .lesson-list .lesson-item.active {
+        background-color: rgba(94, 114, 228, 0.1);
+        border-right: 3px solid var(--primary);
+    }
+
+    .lesson-list .lesson-item:last-child {
+        border-bottom: none;
+    }
+
+    .lesson-icon {
+        font-size: 1.2rem;
+    }
+
+    .lesson-title {
+        font-weight: 500;
+        color: var(--dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .lesson-duration {
+        font-size: 0.875rem;
+    }
+
+    .lesson-status {
+        font-size: 1.1rem;
+    }
+
+    .ask-question-form {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    @media (max-width: 991.98px) {
+        .lesson-sidebar {
+            position: static;
+            height: auto;
+            padding: 1rem;
+        }
+
+        .lesson-content {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const markCompleteBtn = document.getElementById('mark-complete-btn');
+        const video = document.getElementById('lesson-video');
+
+        let watchTime = 0;
+        let watchInterval;
+
+        // Track video watch time
+        if (video) {
+            if (video.tagName === 'VIDEO') {
+                // For uploaded videos
+                video.addEventListener('play', function () {
+                    watchInterval = setInterval(() => {
+                        watchTime = video.currentTime;
+                    }, 1000);
+                });
+
+                video.addEventListener('pause', function () {
+                    clearInterval(watchInterval);
+                });
+            } else if (video.tagName === 'IFRAME') {
+                // For YouTube videos - simplified tracking
+                watchInterval = setInterval(() => {
+                    watchTime += 1;
+                }, 1000);
+            }
+        }
+
+        // Mark lesson as complete
+        if (markCompleteBtn) {
+            markCompleteBtn.addEventListener('click', function () {
+                const lessonId = {{ lesson.id }
+            };
+
+            fetch('{% url "mark_lesson_complete" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    lesson_id: lessonId,
+                    watch_time: Math.floor(watchTime)
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        markCompleteBtn.innerHTML = '<i class="fas fa-check me-2"></i>Completed';
+                        markCompleteBtn.classList.remove('btn-success');
+                        markCompleteBtn.classList.add('btn-outline-success');
+                        markCompleteBtn.disabled = true;
+
+                        // Update progress bar
+                        const progressBar = document.querySelector('.progress-bar');
+                        if (progressBar) {
+                            progressBar.style.width = data.progress + '%';
+                            progressBar.setAttribute('aria-valuenow', data.progress);
+                            progressBar.parentElement.previousElementSibling.querySelector('span:last-child').textContent = data.progress + '%';
+                        }
+
+                        // Show success message
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-success alert-dismissible fade show';
+                        alert.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                        document.querySelector('.lesson-info').insertBefore(alert, document.querySelector('.lesson-info').firstChild);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while marking the lesson as complete.');
+                });
+        });
+    }
+});
+</script>
+{% endblock %}
